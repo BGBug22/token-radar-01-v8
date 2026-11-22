@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comps-Fit Launch Radar — token-radar-01</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="top">
+  <div class="eyebrow">MAKE.FUN &middot; TOKEN-RADAR-01 &middot; SNAPSHOT 2026-11-14</div>
+  <h1>Comps-Fit Launch Radar</h1>
+  <p class="lede">Every pre-token protocol, priced off the traded market &mdash; not off a flat
+  multiple. The comps curve is fit on the 128 traded tokens in this snapshot, tested
+  out of sample, and every row shows its maths. A protocol is listed as
+  <em>recording no token</em> when DefiLlama&rsquo;s record carries none for it.</p>
+  <p class="src">Source: DefiLlama protocols list, fetched 2026-11-14. Board ranks
+  pre-token protocols only; tokens that already trade are shown separately, at
+  market value, never ranked.</p>
+</header>
+
+<section class="kpis" id="kpis" aria-label="Headline figures">
+  <div class="kpi"><span class="kpi-v" id="k-protocols">&mdash;</span><span class="kpi-l">protocols in snapshot</span></div>
+  <div class="kpi"><span class="kpi-v" id="k-watchlist">&mdash;</span><span class="kpi-l">on the watchlist</span></div>
+  <div class="kpi"><span class="kpi-v" id="k-board">&mdash;</span><span class="kpi-l">ranked pre-token rows</span></div>
+  <div class="kpi"><span class="kpi-v" id="k-fitted">&mdash;</span><span class="kpi-l">traded tokens fitted</span></div>
+  <div class="kpi"><span class="kpi-v">R&sup2; 0.194</span><span class="kpi-l">comps fit, log-log</span></div>
+  <div class="kpi"><span class="kpi-v">&times;2.91 vs &times;4.89</span><span class="kpi-l">split-half median error, fitted vs flat</span></div>
+</section>
+
+<section class="verdictbar" id="verdictbar" aria-label="Farm verdicts">
+  <span class="vb v-farm">FARM <b id="v-farm">&mdash;</b></span>
+  <span class="vb v-thin">THIN <b id="v-thin">&mdash;</b></span>
+  <span class="vb v-skip">SKIP <b id="v-skip">&mdash;</b></span>
+  <span class="vb-note">Verdict from implied value alone: FARM at $25M or more, THIN at $5M&ndash;$25M,
+  SKIP below $5M. Farming costs $28 of gas for 12 weeks; capital is returned, gas is not.</span>
+</section>
+
+<section class="model" aria-label="The model">
+  <h2>How a row is priced</h2>
+  <p class="eq">implied value = comps &times; peer rate &times; growth tilt &times; maturity tilt</p>
+  <table class="terms">
+    <thead><tr><th>Term</th><th>What it is</th><th>Where it comes from</th></tr></thead>
+    <tbody>
+      <tr><td class="num">comps</td><td>10 ^ (3.0247 + 0.5223 &times; log10 TVL)</td><td>Fitted on the 128 traded tokens in this snapshot (OLS, log-log).</td></tr>
+      <tr><td class="num">peer rate</td><td>Share of protocols in the same TVL band that already list a token.</td><td>Five bands, 0.52 / 0.57 / 0.59 / 0.66 / 0.56 from $5M to $5B+.</td></tr>
+      <tr><td class="num">growth tilt</td><td>1 + clamp(7-day change, &minus;60, +120) &divide; 100 &times; 0.25</td><td>Bounded tilt, stated as a tilt: growth does not move the traded multiple in-sample (R&sup2; 0.02).</td></tr>
+      <tr><td class="num">maturity tilt</td><td>0.9 + min(age in days, 1095) &divide; 1095 &times; 0.2</td><td>Bounded 0.9&ndash;1.1; age does not move the traded multiple in-sample either (R&sup2; 0.00).</td></tr>
+    </tbody>
+  </table>
+  <h3>Out-of-sample test</h3>
+  <table class="terms">
+    <thead><tr><th>Split</th><th>Fitted curve, median error</th><th>Flat multiple, median error</th></tr></thead>
+    <tbody>
+      <tr><td>First half fits, second half tested</td><td class="num">&times;2.91</td><td class="num">&times;4.89</td></tr>
+      <tr><td>Second half fits, first half tested</td><td class="num">&times;3.92</td><td class="num">&times;6.06</td></tr>
+      <tr><td>In-sample, all 128 traded</td><td class="num">&times;3.36 (R&sup2; 0.194)</td><td class="num">&times;4.86</td></tr>
+    </tbody>
+  </table>
+  <p class="note">A category tilt was tested and dropped: it changed neither split-half
+  median. No protocol name is ever special-cased; the same function scores every
+  row. Wrapped, staked, bridged and exchange products are excluded from the board
+  by the house&rsquo;s own rule, because each is a product of a token that already trades.</p>
+</section>
+
+<section class="controls" aria-label="Filter and sort the board">
+  <input id="q" type="search" placeholder="Search name or slug&hellip;" autocomplete="off">
+  <select id="f-cat" aria-label="Category"><option value="">All categories</option></select>
+  <select id="f-chain" aria-label="Chain"><option value="">All chains</option></select>
+  <select id="f-verdict" aria-label="Verdict">
+    <option value="">All verdicts</option><option>FARM</option><option>THIN</option><option>SKIP</option>
+  </select>
+  <label class="chk"><input id="f-watch" type="checkbox"> Watchlist only</label>
+  <select id="f-sort" aria-label="Sort by">
+    <option value="rank">Sort: rank</option>
+    <option value="implied">Sort: implied value</option>
+    <option value="tvl">Sort: TVL</option>
+    <option value="growth">Sort: 7-day change</option>
+    <option value="age">Sort: age</option>
+  </select>
+  <span class="count" id="count"></span>
+</section>
+
+<section aria-label="The board">
+  <table class="board" id="board">
+    <thead><tr>
+      <th data-sort="rank">#</th><th data-sort="name">Protocol</th><th data-sort="tvl">TVL</th>
+      <th data-sort="growth">7d</th><th data-sort="age">Age</th><th data-sort="peer">Peer</th>
+      <th data-sort="implied">Implied value</th><th data-sort="verdict">Verdict</th><th>Farm cost / 12 wks</th>
+    </tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+</section>
+
+<section class="detail" id="detail" aria-label="Protocol detail">
+  <p class="detail-empty">Click a row to open its detail: the term-by-term maths and the six farm steps with cost and time. Every one of the 198 rows carries the same six-step plan.</p>
+</section>
+
+<section class="live" aria-label="Tokens that already trade">
+  <h2>Already trades &mdash; market value, never ranked</h2>
+  <p class="note">These protocols record a token, so the board does not rank them. They are
+  the 24 largest by market cap, and 128 of them are the fit set the comps curve is
+  fitted on. Their market-cap-to-TVL ratio is the curve&rsquo;s raw material.</p>
+  <table class="board">
+    <thead><tr><th>Protocol</th><th>TVL</th><th>Market cap</th><th>Mc / TVL</th><th>7d</th></tr></thead>
+    <tbody id="live-rows"></tbody>
+  </table>
+</section>
+
+<footer>
+  <p>Method: implied value is the entry&rsquo;s own claim, never make.fun&rsquo;s. It is what a
+  token would be worth if the protocol&rsquo;s record stayed as it is; it does not predict
+  whether or when a token is issued. Farm steps are generic actions derived from each
+  protocol&rsquo;s category, chains, TVL and age. Nothing here is financial advice.</p>
+</footer>
+
+<script src="../data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
